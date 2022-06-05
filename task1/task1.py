@@ -10,6 +10,17 @@ class task1:
     def __init__(self):
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.callback_fn)
+
+    def pick(self):
+        # full stop before picking bottle
+        twist = Twist()
+        twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
+        twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
+        self.pub.publish(twist)
+
+        # pick bottle
+
+        # hold
     
     def callback_fn(self, data):
         for box in data.bounding_boxes:
@@ -40,13 +51,14 @@ class task1:
                 if box.xmax - box.xmin < CRITICAL_BOX_SIZE:
                     twist.linear.x = 0.2; twist.linear.y = 0.0; twist.linear.z = 0.0
                 else:
-                    twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
+                    self.pick()
 
                 # if the center of bounding box is not at screen center with some error range, rotate
                 if abs(dis) > 50:
                     twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2 if dis > 0 else -0.2
                 else:
-                    twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2 if dis > 0 else -0.2
+                    twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
+
                 self.pub.publish(twist)
 
 def main():
