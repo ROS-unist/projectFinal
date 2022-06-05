@@ -66,8 +66,9 @@ class task1:
                     twist.linear.z = 0
                     self.pub.publish(twist)
                     rospy.sleep(0.5)
-                    ##Pick it up
-                    self.arm_pub.publish('G')
+                    #Pick it up
+                    #we need to  implement a function for grabing the bottle
+                    self.arm_pub.publish('f')
                     self.stop+=1
 
 def main():
