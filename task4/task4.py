@@ -13,21 +13,28 @@ class m4:
     def callback_fn(self, data):
         for box in data.bounding_boxes:
             twist = Twist()
-            while (box.Class == 'bottle'):
-                x1 = box.xmax
-                y1 = box.ymax
-                # twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
-                e_dist = math.sqrt((x1 * x1) + (y1 * y1))
-                
-                twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2
-                self.pub.publish(twist)
-
-            # wait and stop turtlebot
-            sleep(5)
-            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
-            self.pub.publish(twist)
-            
-
+            if (box.Class == 'bottle'):
+                img_mid = 640
+				dif = box.xmax - box.xmin
+				bottle_mid = box.xmin + (dif / 2)
+				e = 100
+				vel = 0.15
+				twist = Twist()
+				twist.linear.x = 0
+				twist.linear.y = 0
+				twist.linear.z = 0
+				twist.angular.x = 0
+				twist.angular.y = 0
+				if img_mid > bottle_mid + 100:
+					#rospy.loginfo("go left")				
+					twist.angular.z = vel
+					
+				elif img_mid < bottle_mid - 100:
+					#rospy.loginfo("go right")
+					twist.angular.z = -vel
+				else:
+					twist.angular.z = 0
+				self.pub.publish(twist)
 
 def main():
     c = m4()
