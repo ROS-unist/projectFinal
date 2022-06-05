@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+import rospy
 from darknet_ros_msgs.msg import BoundingBoxes
 from geometry_msgs.msg import Twist
-import rospy
-import math
-from time import sleep
+from std_msgs.msgs import Int32, Bool, String
+import  sys
+import actionlib
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
 class m4:
     def __init__(self) -> None:
@@ -12,11 +14,10 @@ class m4:
     
     def callback_fn(self, data):
         for box in data.bounding_boxes:
-            twist = Twist()
             if (box.Class == 'bottle'):
-                img_mid = 640
-				dif = box.xmax - box.xmin
-				bottle_mid = box.xmin + (dif / 2)
+                midImage = 640
+				difImage = box.xmax - box.xmin
+				midBottle = box.xmin + (difImage / 2)
 				e = 100
 				vel = 0.15
 				twist = Twist()
@@ -25,12 +26,10 @@ class m4:
 				twist.linear.z = 0
 				twist.angular.x = 0
 				twist.angular.y = 0
-				if img_mid > bottle_mid + 100:
-					#rospy.loginfo("go left")				
+				if midImage > midBottle + e:
 					twist.angular.z = vel
 					
-				elif img_mid < bottle_mid - 100:
-					#rospy.loginfo("go right")
+				elif midImage < midBottle - e:
 					twist.angular.z = -vel
 				else:
 					twist.angular.z = 0
