@@ -23,9 +23,8 @@ class task1:
         self.arm = moveit_commander.MoveGroupCommander('arm')
         self.arm.set_planning_time(2)
 
-        # initial postion of gripper
-        self.move_arm([0,0,0,0])
-
+    def __del__(self):
+        self.stop_robot()
 
     def move_gripper(self, v):
         joint_gripper = self.gripper.get_current_joint_values() # is this necessary??
@@ -74,13 +73,9 @@ class task1:
         twist = Twist()
         
         if d == 'f':
-            twist.linear.x = 0.2; twist.linear.y = 0.0; twist.linear.z = 0.0
+            twist.linear.x = 0.05; twist.linear.y = 0.0; twist.linear.z = 0.0
         elif d == 'b':
-            twist.linear.x = -0.2; twist.linear.y = 0.0; twist.linear.z = 0.0
-        else:
-            print("Error moving robot! \n Unknown direction.")
-            self.stop_robot()
-            sys.exit(0)
+            twist.linear.x = -0.05; twist.linear.y = 0.0; twist.linear.z = 0.0
         
         self.pub.publish(twist)
 
@@ -97,6 +92,7 @@ class task1:
     
 
     # TODO receive array of Strings not just one
+    # TODO something is not correct here :cry
     def callback_fn(self, s):
         m = s.data.split()
         if m[0] == 'bottle':
