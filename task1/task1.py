@@ -23,9 +23,13 @@ class task1:
         self.arm = moveit_commander.MoveGroupCommander('arm')
         self.arm.set_planning_time(2)
 
+        # initial postion of gripper
+        self.move_arm([0,0,0,0])
+
+
     def move_gripper(self, v):
-        joint_gripper = self.gripper.get_current_joint_values()
-        joint_gripper[0] = v
+        # joint_gripper = self.gripper.get_current_joint_values()
+        joint_gripper = v
         self.gripper.go(joints=joint_gripper, wait=True)
         rospy.sleep(5)
         self.gripper.stop()
@@ -36,7 +40,7 @@ class task1:
         self.pub2.publish(display_trajectory)
 
     def move_arm(self, v):
-        joint_values = self.arm.get_current_joint_values() #How to get joint states
+        # joint_values = self.arm.get_current_joint_values() #How to get joint states
         joint_values = v
 
         self.arm.go(joints=joint_values, wait=True)
@@ -63,6 +67,9 @@ class task1:
         # arm home pose
         self.move_arm([0.0, -1.0, 0.3, 0.7])
 
+        # stop robot completely by passing random char to move
+        self.move('s')
+
     def move(self,d):
         twist = Twist()
         
@@ -79,7 +86,7 @@ class task1:
 
     def fix_target(self, m, e = 50):  # higher accuracy
         twist = Twist()
-        if m + e > IMAGE_SIZE_X / 2 + e:
+        if m > IMAGE_SIZE_X / 2 + e:
             twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2
         elif m < IMAGE_SIZE_X / 2 - e:
             twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = - 0.2
@@ -88,23 +95,21 @@ class task1:
 
         self.pub.publish(twist)
     
-    
-    def callback_fn(self, data):
-        for s in data:
-            m = s.split()
-            if m[0] == 'bottle':
-                # find middle of bottle's bounding box
-                mid = (int(m[2]) + int(m[1]))/2
 
-                # move toward bottle until the size of its bounding box >= critical size
-                if int(m[2]) - int(m[1]) < CRITICAL_BOX_SIZE:
-                    self.move('f')
-                else:
-                    self.stop_robot()
-                    self.pick()
+    def callback_fn(self, s):
+        m = s.data.split()
+        if m[0] == 'bottle':
+            # find middle of bottle's bounding box
+            mid = (int(m[2]) + int(m[1]))/2
 
-                # if the center of bounding box is not at screen center with some error range, rotate
-                self.fix_target(mid)
+            # move toward bottle until the size of its bounding box >= critical size
+            if int(m[2]) - int(m[1]) < CRITICAL_BOX_SIZE:
+                self.move('f')
+            else:
+                self.pick()
+
+            # if the center of bounding box is not at screen center with some error range, rotate
+            self.fix_target(mid)
 
 def main():
     c = task1()
@@ -114,4 +119,4 @@ def main():
 
 if __name__=="__main__":
     main()
-
+    

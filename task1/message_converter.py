@@ -22,8 +22,7 @@ class m_converter:
             int16 id
             string Class
             '''
-            self.pub.publish(f'{box.Class} {box.xmin} {box.xmax}')
-
+            self.pub.publish(box.Class + ' ' + str(box.xmin) + ' ' + str(box.xmax))
 
 def main():
     c = m_converter()
