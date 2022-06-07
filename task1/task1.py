@@ -15,7 +15,7 @@ class task1:
     def callback_fn(self, data):
         for box in data.bounding_boxes:
             if (box.Class == 'bottle') and self.stop <= 2:
-                self.num_detected += 1
+                self.stop += 1
                 midImage = 640 #to be configured
                 difBoxes = box.xmax - box.xmin
                 bottle_mid = box.xmin + (difBoxes / 2)
