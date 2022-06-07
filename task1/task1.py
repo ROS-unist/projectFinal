@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-from darknet_ros_msgs.msg import BoundingBoxes
+from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 import moveit_commander
-import moveit_msgs.msg
+# import moveit_msgs.msg
 import rospy
 
 import sys
@@ -13,8 +13,8 @@ CRITICAL_BOX_SIZE = 1280 / 10
 class task1:
     def __init__(self):
         self.pub1 = rospy.Publisher('cmd_vel', Twist, queue_size=10)
-        self.sub = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.callback_fn)
-        self.pub2 = rospy.Publisher("/move_group/display_planned_path", moveit_msgs.msg.DisplayTrajectory, queue_size=20)
+        self.sub = rospy.Subscriber('converted_message', String, self.callback_fn)
+        # self.pub2 = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
 
         moveit_commander.roscpp_initialize(sys.argv) # initialize moveit commander
         self.robot = moveit_commander.RobotCommander() # Instantiate a RobotCommander object
@@ -97,16 +97,17 @@ class task1:
         self.pub1.publish(twist)
     
     def callback_fn(self, data):
-        for box in data.bounding_boxes:
-            if box.Class == 'bottle':
+        for s in data:
+            m = s.split()
+            if m[0] == 'bottle':
                 # find middle of bottle's bounding box
-                mid = (box.xmax + box.xmin)/2
+                mid = (int(m[2]) + int(m[1]))/2
                 e = 50 # higher accuracy
 
                 twist = Twist()
 
                 # move toward bottle until the size of its bounding box >= critical size
-                if box.xmax - box.xmin < CRITICAL_BOX_SIZE:
+                if int(m[2]) - int(m[1]) < CRITICAL_BOX_SIZE:
                     self.move('f')
                 else:
                     self.stop_robot()
