@@ -28,7 +28,7 @@ class task1:
 
 
     def move_gripper(self, v):
-        # joint_gripper = self.gripper.get_current_joint_values()
+        # joint_gripper = self.gripper.get_current_joint_values() # is this necessary??
         joint_gripper = v
         self.gripper.go(joints=joint_gripper, wait=True)
         rospy.sleep(5)
@@ -40,7 +40,7 @@ class task1:
         self.pub2.publish(display_trajectory)
 
     def move_arm(self, v):
-        # joint_values = self.arm.get_current_joint_values() #How to get joint states
+        # joint_values = self.arm.get_current_joint_values() 
         joint_values = v
 
         self.arm.go(joints=joint_values, wait=True)
@@ -87,9 +87,9 @@ class task1:
     def fix_target(self, m, e = 50):  # higher accuracy
         twist = Twist()
         if m > IMAGE_SIZE_X / 2 + e:
-            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2
+            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = -0.2
         elif m < IMAGE_SIZE_X / 2 - e:
-            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = - 0.2
+            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2
         else:
             twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
 
