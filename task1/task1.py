@@ -96,21 +96,23 @@ class task1:
         self.pub.publish(twist)
     
 
+    # TODO receive array of Strings not just one
     def callback_fn(self, s):
         m = s.data.split()
         if m[0] == 'bottle':
             # find middle of bottle's bounding box
             mid = (int(m[2]) + int(m[1]))/2
 
-            # move toward bottle until the size of its bounding box >= critical size
-            while int(m[2]) - int(m[1]) < CRITICAL_BOX_SIZE:
-                self.move('f')
-            
-            if int(m[2]) - int(m[1]) >= CRITICAL_BOX_SIZE:
-                self.pick()
-
             # if the center of bounding box is not at screen center with some error range, rotate
             self.fix_target(mid)
+
+            # move toward bottle until the size of its bounding box >= critical size
+            if int(m[2]) - int(m[1]) < CRITICAL_BOX_SIZE:
+                self.move('f')
+                rospy.sleep(5)
+            else:
+                self.pick()
+
 
 def main():
     c = task1()

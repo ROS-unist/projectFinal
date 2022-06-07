@@ -8,6 +8,7 @@ class m_converter:
         self.sub = rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, self.callback_fn)
         self.pub = rospy.Publisher('converted_message', String, queue_size=20)
 
+    # TODO send an array of Strings not just one
     def callback_fn(self, data):
         '''
         convert bounding box msg to string msg
