@@ -1,8 +1,9 @@
 #!/usr/bin/env python
+import rospy
 from darknet_ros_msgs.msg import BoundingBoxes
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
-import rospy
+import sys
 
 class task1:
     def __init__(self):
@@ -32,7 +33,7 @@ class task1:
                 twist.angular.x = 0
                 twist.angular.y = 0
                 twist.angular.z = 0
-                if self.num_detected == 1:
+                if self.stop == 1:
                     self.pub.publish(twist)
                 if midImage > bottle_mid + threshold:
                     twist.angular.z = velAngular
@@ -71,12 +72,16 @@ class task1:
                     self.arm_pub.publish('f')
                     self.stop+=1
 
-def main():
-    c = task1()
+def main(args):
     rospy.init_node('task1', anonymous=True)
-    rospy.spin()
+    c = task1()
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        rospy.loginfo("shutting_down")
+
 
 
 if __name__=="__main__":
-    main()
+    main(sys.argv)
 
