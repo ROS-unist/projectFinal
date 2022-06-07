@@ -28,7 +28,7 @@ class task1:
 
 
     def move_gripper(self, v):
-        # joint_gripper = self.gripper.get_current_joint_values() # is this necessary??
+        joint_gripper = self.gripper.get_current_joint_values() # is this necessary??
         joint_gripper = v
         self.gripper.go(joints=joint_gripper, wait=True)
         rospy.sleep(5)
@@ -40,7 +40,7 @@ class task1:
         self.pub2.publish(display_trajectory)
 
     def move_arm(self, v):
-        # joint_values = self.arm.get_current_joint_values() 
+        joint_values = self.arm.get_current_joint_values() 
         joint_values = v
 
         self.arm.go(joints=joint_values, wait=True)
@@ -103,9 +103,10 @@ class task1:
             mid = (int(m[2]) + int(m[1]))/2
 
             # move toward bottle until the size of its bounding box >= critical size
-            if int(m[2]) - int(m[1]) < CRITICAL_BOX_SIZE:
+            while int(m[2]) - int(m[1]) < CRITICAL_BOX_SIZE:
                 self.move('f')
-            else:
+            
+            if int(m[2]) - int(m[1]) >= CRITICAL_BOX_SIZE:
                 self.pick()
 
             # if the center of bounding box is not at screen center with some error range, rotate
