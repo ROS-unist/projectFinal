@@ -2,7 +2,7 @@
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 import moveit_commander
-# import moveit_msgs.msg
+import moveit_msgs.msg
 import rospy
 
 import sys
@@ -12,75 +12,56 @@ CRITICAL_BOX_SIZE = 1280 / 10
 
 class task1:
     def __init__(self):
-        self.pub1 = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+        self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber('converted_message', String, self.callback_fn)
-        # self.pub2 = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
+        self.pub2 = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
 
-        moveit_commander.roscpp_initialize(sys.argv) # initialize moveit commander
-        self.robot = moveit_commander.RobotCommander() # Instantiate a RobotCommander object
-        self.scene = moveit_commander.PlanningSceneInterface() # remote interface for getting, setting, and updating the robot’s internal understanding of the surrounding world
-        self.gripper = moveit_commander.MoveGroupCommander('gripper') # name of movegroup 2 is “gripper
-        self.arm = moveit_commander.MoveGroupCommander('arm') # name of movegroup 1 is “arm”
+        moveit_commander.roscpp_initialize(sys.argv) 
+        self.robot = moveit_commander.RobotCommander() 
+        self.scene = moveit_commander.PlanningSceneInterface() 
+        self.gripper = moveit_commander.MoveGroupCommander('gripper')
+        self.arm = moveit_commander.MoveGroupCommander('arm')
         self.arm.set_planning_time(2)
 
-    def pick(self):
-
-        '''
-        
-        related ros topics:
-        /joint_trajectory_point
-        /gripper_position
-
-        EITHER use the above topics or moveit
-
-        '''
-        # open gripper
+    def move_gripper(self, v):
         joint_gripper = self.gripper.get_current_joint_values()
-        joint_gripper[0] = 0.010
+        joint_gripper[0] = v
         self.gripper.go(joints=joint_gripper, wait=True)
         rospy.sleep(5)
         self.gripper.stop()
         self.gripper.clear_pose_targets()
 
-        # arm forward
+        display_trajectory = moveit_msgs.msg.DisplayTrajectory()
+        display_trajectory.trajectory_start = self.robot.get_current_state()
+        self.pub2.publish(display_trajectory)
+
+    def move_arm(self, v):
         joint_values = self.arm.get_current_joint_values() #How to get joint states
-        joint_values[0]= 0
-        joint_values[2]= 0
-        joint_values[3]= 0
-        joint_values[4]= 0
+        joint_values = v
 
         self.arm.go(joints=joint_values, wait=True)
         rospy.sleep(5)
         self.arm.stop()
         self.arm.clear_pose_targets()
-
-        # close gripper 
-        joint_gripper = self.gripper.get_current_joint_values()
-        joint_gripper[0] = -0.010
-        self.gripper.go(joints=joint_gripper, wait=True)
-        rospy.sleep(5)
-        self.gripper.stop()
-        self.gripper.clear_pose_targets()
-
-        # arm home pose
-        joint_values = self.arm.get_current_joint_values() #How to get joint states
-        joint_values[0]= 0.0
-        joint_values[2]= -1.0
-        joint_values[3]= 0.3
-        joint_values[4]= 0.7
-
-        self.arm.go(joints=joint_values, wait=True)
-        rospy.sleep(5)
-        self.arm.stop()
-        self.arm.clear_pose_targets()
-
 
     def stop_robot(self):
         twist = Twist()
         twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
         twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
-        self.pub1.publish(twist)
-        
+        self.pub.publish(twist)
+
+    def pick(self):
+        # open gripper
+        self.move_gripper(0.010)
+
+        # arm forward
+        self.move_arm([0,0,0,0])
+
+        # close gripper 
+        self.move_gripper(-0.010)
+
+        # arm home pose
+        self.move_arm([0.0, -1.0, 0.3, 0.7])
 
     def move(self,d):
         twist = Twist()
@@ -94,7 +75,19 @@ class task1:
             self.stop_robot()
             sys.exit(0)
         
-        self.pub1.publish(twist)
+        self.pub.publish(twist)
+
+    def fix_target(self, m, e = 50):  # higher accuracy
+        twist = Twist()
+        if m + e > IMAGE_SIZE_X / 2 + e:
+            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2
+        elif m < IMAGE_SIZE_X / 2 - e:
+            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = - 0.2
+        else:
+            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
+
+        self.pub.publish(twist)
+    
     
     def callback_fn(self, data):
         for s in data:
@@ -102,9 +95,6 @@ class task1:
             if m[0] == 'bottle':
                 # find middle of bottle's bounding box
                 mid = (int(m[2]) + int(m[1]))/2
-                e = 50 # higher accuracy
-
-                twist = Twist()
 
                 # move toward bottle until the size of its bounding box >= critical size
                 if int(m[2]) - int(m[1]) < CRITICAL_BOX_SIZE:
@@ -114,14 +104,7 @@ class task1:
                     self.pick()
 
                 # if the center of bounding box is not at screen center with some error range, rotate
-                if mid + e > IMAGE_SIZE_X / 2 + e:
-                    twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2
-                elif mid < IMAGE_SIZE_X / 2 - e:
-                    twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = - 0.2
-                else:
-                    twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
-
-                self.pub1.publish(twist)
+                self.fix_target(mid)
 
 def main():
     c = task1()
