@@ -8,7 +8,7 @@ import sys
 class task1:
     def __init__(self):
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
-        self.sub = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.callback_fn)
+        self.pub = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.callback_fn)
         self.arm_pub = rospy.Publisher('move_arm', String, queue_size=1)
         self.rotate = True
         self.stop = 0
