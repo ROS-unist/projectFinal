@@ -143,6 +143,7 @@ class task2:
                 self.pick()
                 self.move('b')
                 rospy.sleep(time.time() - self.time)
+                self.stop_robot()
                 self.drop()
 
                 # movement to locate next bottle
