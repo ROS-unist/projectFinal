@@ -72,16 +72,16 @@ class task1:
         # task is done
         self.done = True
 
-    def move(self,d):
-        self.moving = True
+    # def move(self,d):
+    #     self.moving = True
 
-        twist = Twist()
-        if d == 'f':
-            twist.linear.x = 0.1; twist.linear.y = 0.0; twist.linear.z = 0.0
-        elif d == 'b':
-            twist.linear.x = -0.1; twist.linear.y = 0.0; twist.linear.z = 0.0
+    #     twist = Twist()
+    #     if d == 'f':
+    #         twist.linear.x = 0.1; twist.linear.y = 0.0; twist.linear.z = 0.0
+    #     elif d == 'b':
+    #         twist.linear.x = -0.1; twist.linear.y = 0.0; twist.linear.z = 0.0
         
-        self.pub.publish(twist)
+    #     self.pub.publish(twist)
 
     def fix_target(self, m, e):
         twist = Twist()
@@ -104,19 +104,27 @@ class task1:
         if m[0] == 'bottle' or m[0] == 'vase': # msg converter sends only this msgs but anyway check it 
             # find middle of bottle's bounding box
             mid = (int(m[2]) + int(m[1]))/2
-
+            dif = int(m[2]) - int(m[1])
             e = 30
             if mid > IMAGE_SIZE_X / 2 + e or mid < IMAGE_SIZE_X / 2 - e:
                 # if the center of bounding box is not at screen center with some error range, rotate
                 self.fix_target(mid, e)
 
             # move toward bottle until the size of its bounding box >= critical size
-            if int(m[2]) - int(m[1]) < CRITICAL_BOX_SIZE:
-                self.move('f')
+            twist = Twist()
+            if dif < CRITICAL_BOX_SIZE:
+                if dif < 100:
+                    twist.linear.x = 0.15
+                elif dif < 200:
+                    twist.linear.x = 0.10
+                elif dif < 290:
+                    twist.linear.x = 0.05
+                elif dif > 290 and dif < CRITICAL_BOX_SIZE:
+                    twist.linear.x = 0.05
+                self.pub.publish(twist)
             else:
                 self.stop_robot()
                 self.pick()
-
 
 def main():
     # let's see if the order changed, what will happen to error messages 
