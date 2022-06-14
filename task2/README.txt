@@ -18,8 +18,7 @@ Jetson
 REMOTE_PC
 	roslaunch turtlebot3_manipulation_bringup turtlebot3_manipulation_bringup.launch
 	roslaunch turtlebot3_manipulation_moveit_config move_group.launch
-	rosrun basic_control teleop
 	
 Move for map
 	roslaunch turtlebot3_navigation turtlebot3_navigation.launch map_file:=$HOME/empty_arena_new.yaml open_rviz:=false
-	rosrun tasks two.py
+	rosrun task2.py
