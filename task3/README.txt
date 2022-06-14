@@ -8,6 +8,7 @@ Jetson
 	roslaunch ros_deep_learning video_source.ros1.launch input:=csi://0 output:=display://0
 
 	python converter.py
+	python message_converter.py
 
         roslaunch darknet_ros darknet_ros.launch
         
@@ -18,7 +19,6 @@ Jetson
 REMOTE_PC
 	roslaunch turtlebot3_manipulation_bringup turtlebot3_manipulation_bringup.launch
 	roslaunch turtlebot3_manipulation_moveit_config move_group.launch
-	rosrun basic_control teleop
 	
 Move
 	roslaunch turtlebot3_navigation turtlebot3_navigation.launch map_file:=$HOME/empty_arena_new.yaml open_rviz:=false
