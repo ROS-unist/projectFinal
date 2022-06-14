@@ -119,9 +119,6 @@ class task2:
 
     # TODO something is not correct here :cry
     def callback_fn(self, s):
-        if self.done == True:
-            return
-
         m = s.data.split()
         if m[0] == 'bottle' or m[0] == 'vase': # msg converter sends only this msgs but anyway check it 
             # find middle of bottle's bounding box
