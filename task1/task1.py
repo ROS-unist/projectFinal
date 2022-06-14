@@ -1,87 +1,130 @@
 #!/usr/bin/env python
-import rospy
-from darknet_ros_msgs.msg import BoundingBoxes
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
+import moveit_commander
+import rospy
+
 import sys
+
+IMAGE_SIZE_X = 1280
+CRITICAL_BOX_SIZE = 355 #1280 / 10
+
 
 class task1:
     def __init__(self):
+        self.done = False
+
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
-        self.pub = rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.callback_fn)
-        self.arm_pub = rospy.Publisher('move_arm', String, queue_size=1)
-        self.rotate = True
-        self.stop = 0
-    def callback_fn(self, data):
-        for box in data.bounding_boxes:
-            if (box.Class == 'bottle') and self.stop <= 2:
-                self.stop += 1
-                midImage = 640 #to be configured
-                difBoxes = box.xmax - box.xmin
-                bottle_mid = box.xmin + (difBoxes / 2)
-                threshold = 30
-                velAngular = 0.15
-                vel = 0.15
-                #We will use this for calibration purpose
-                # rospy.loginfo(difBoxes)
-                # rospy.loginfo(box.Class)
+        self.sub = rospy.Subscriber('converted_message', String, self.callback_fn)
 
-                twist = Twist()
-                twist.linear.x = 0
-                twist.linear.y = 0
-                twist.linear.z = 0
-                twist.angular.x = 0
-                twist.angular.y = 0
-                twist.angular.z = 0
-                if self.stop == 1:
-                    self.pub.publish(twist)
-                if midImage > bottle_mid + threshold:
-                    twist.angular.z = velAngular
-                elif midImage < bottle_mid - threshold:
-                    twist.angular.z = -velAngular
-                else:
-                    twist.angular.z = 0
-				
-                if difBoxes < 100:
-                   twist.linear.x = vel
+        moveit_commander.roscpp_initialize(sys.argv) 
+        self.robot = moveit_commander.RobotCommander() 
+        self.scene = moveit_commander.PlanningSceneInterface() 
+        self.gripper = moveit_commander.MoveGroupCommander('gripper')
+        self.arm = moveit_commander.MoveGroupCommander('arm')
+        self.arm.set_planning_time(2) # do we need this only for arm?
+        self.gripper.set_planning_time(2)
 
-                elif difBoxes < 200:
-                    twist.linear.x = vel - 0.05
-                elif difBoxes < 290:
-                    twist.linear.x = vel - 0.1
+    # destructor to stop the robot at the end
+    def __del__(self):
+        self.stop_robot()
+        moveit_commander.roscpp_shutdown()
 
-                else:
-                    twist.linear.x = 0
-                    self.stop += 1		
-				
-                self.pub.publish(True)
-                #for calibration
-				#rospy.loginfo(box)
-                self.pub.publish(twist)
-                if self.stop==2:
-                    twist.angular.x = 0
-                    twist.angular.y = 0
-                    twist.angular.z = 0
-                    twist.linear.x = 0
-                    twist.linear.y = 0
-                    twist.linear.z = 0
-                    self.pub.publish(twist)
-                    rospy.sleep(0.5)
-                    #Pick it up
-                    #we need to  implement a function for grabing the bottle
-                    self.arm_pub.publish('f')
-                    self.stop+=1
+    def move_gripper(self, v):
+        joint_gripper = self.gripper.get_current_joint_values()
+        joint_gripper[0] = v
+        self.gripper.go(joints=joint_gripper, wait=True)
+        # rospy.sleep(5)
+        self.gripper.stop()
 
-def main(args):
+        # self.arm.clear_pose_targets() # it is supposed to be used with pose planner
+
+    def move_arm(self, v):
+        joint_values = self.arm.get_current_joint_values() 
+        joint_values[0] = v[0]; joint_values[1] = v[1]; joint_values[2] = v[2]; joint_values[3] = v[3]
+
+        self.arm.go(joints=joint_values, wait=True)
+        rospy.sleep(10)
+        self.arm.stop()
+
+        # self.arm.clear_pose_targets() # it is supposed to be used with pose planner
+
+    def stop_robot(self):
+        self.moving = False
+        twist = Twist()
+        twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
+        twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
+        self.pub.publish(twist)
+
+    def pick(self):
+        # open gripper
+        self.move_gripper(0.010)
+
+        # arm forward
+        self.move_arm([0.0, 1.02, -0.4, -0.4538])
+
+        # close gripper 
+        self.move_gripper(-0.010)
+
+        # arm home pose
+        self.move_arm([0.0, -1.0, 0.3, 0.7])
+
+        # task is done
+        self.done = True
+
+    def move(self,d):
+        self.moving = True
+
+        twist = Twist()
+        if d == 'f':
+            twist.linear.x = 0.1; twist.linear.y = 0.0; twist.linear.z = 0.0
+        elif d == 'b':
+            twist.linear.x = -0.1; twist.linear.y = 0.0; twist.linear.z = 0.0
+        
+        self.pub.publish(twist)
+
+    def fix_target(self, m, e):
+        twist = Twist()
+        if m > IMAGE_SIZE_X / 2 + e:
+            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = -0.2
+        elif m < IMAGE_SIZE_X / 2 - e:
+            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2
+        else:
+            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
+
+        self.pub.publish(twist)
+    
+
+    # TODO something is not correct here :cry
+    def callback_fn(self, s):
+        if self.done == True:
+            return
+
+        m = s.data.split()
+        if m[0] == 'bottle' or m[0] == 'vase': # msg converter sends only this msgs but anyway check it 
+            # find middle of bottle's bounding box
+            mid = (int(m[2]) + int(m[1]))/2
+
+            e = 30
+            if mid > IMAGE_SIZE_X / 2 + e or mid < IMAGE_SIZE_X / 2 - e:
+                # if the center of bounding box is not at screen center with some error range, rotate
+                self.fix_target(mid, e)
+
+            # move toward bottle until the size of its bounding box >= critical size
+            if int(m[2]) - int(m[1]) < CRITICAL_BOX_SIZE:
+                self.move('f')
+            else:
+                self.stop_robot()
+                self.pick()
+
+
+def main():
+    # let's see if the order changed, what will happen to error messages 
     rospy.init_node('task1', anonymous=True)
-    c = task1()
-    try:
-        rospy.spin()
-    except KeyboardInterrupt:
-        rospy.loginfo("shutting_down")
+    task1()
 
+    rospy.spin()
 
 
 if __name__=="__main__":
-    main(sys.argv)
-
+    main()
