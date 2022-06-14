@@ -26,8 +26,8 @@ class m_converter:
                 self.pub.publish(box.Class + ' ' + str(box.xmin) + ' ' + str(box.xmax))
 
 def main():
-    c = m_converter()
     rospy.init_node('m_converter', anonymous=True)
+    m_converter()
     rospy.spin()
 
 if __name__=='__main__':
