@@ -9,6 +9,7 @@ import sys
 IMAGE_SIZE_X = 1280
 CRITICAL_BOX_SIZE = 355 #1280 / 10
 
+
 class task1:
     def __init__(self):
         self.done = False
@@ -127,4 +128,3 @@ def main():
 
 if __name__=="__main__":
     main()
-    
