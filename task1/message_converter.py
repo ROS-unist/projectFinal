@@ -27,7 +27,7 @@ class m_converter:
 
 def main():
     rospy.init_node('m_converter', anonymous=True)
-    task1()
+    m_converter()
     
     rospy.spin()
 
