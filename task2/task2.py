@@ -15,32 +15,21 @@ CRITICAL_BOX_SIZE = 355 #1280 / 10
 
 class task2:
     def __init__(self):
-
+        self.num_bottles = 0
+        self.moving = True
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber('converted_message', String, self.callback_fn)
 
-        self.num_bottles = 0
-        self.stop = 0
-        self.num_detected = 0
-        self.time = rospy.get_time()
         moveit_commander.roscpp_initialize(sys.argv) 
         self.robot = moveit_commander.RobotCommander() 
         self.scene = moveit_commander.PlanningSceneInterface() 
         self.gripper = moveit_commander.MoveGroupCommander('gripper')
         self.arm = moveit_commander.MoveGroupCommander('arm')
-        self.status_pub = rospy.Publisher('status', String, queue_size=1)
-        self.stop_sub = rospy.Subscriber('reset_yolo', Int32, self.set_stop)
-        self.bottle_pub = rospy.Publisher('bottle_visible', Bool, queue_size=1)
         self.arm.set_planning_time(2) # do we need this only for arm?
         self.gripper.set_planning_time(2)
-        # self.rotate(90)
-        self.bottle_pub.publish(False)
-        # initial rotation
-        # twist = Twist()
-        # twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
-        # twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2
-        # self.pub.publish(twist)
-
+        self.stop_robot()
+        self.rotate(90)
+        
                 
     # destructor to stop the robot at the end
     def __del__(self):
@@ -71,11 +60,11 @@ class task2:
         twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
         twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
         if angle == 90:
-            twist.angular.z = 0.25
+            twist.angular.z = -0.25
             self.pub.publish(twist)
             rospy.sleep(3.5)
-            twist.angular.z = -0.25
-            rospy.sleep(7)
+            twist.angular.z = 0.25
+            rospy.sleep(8)
         elif angle == 180:
             twist.angular.z = 0.5
             self.pub.publish(twist)
@@ -84,7 +73,7 @@ class task2:
         self.pub.publish(twist)
 
     def stop_robot(self):
-        self.moving = False
+        #self.moving = False
         twist = Twist()
         twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
         twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
@@ -117,16 +106,18 @@ class task2:
         self.num_bottles += 1
 
 
-    def move(self,d):
+    def move(self,d, t):
         # if self.moving == False:
         #     self.time = rospy.get_time()
 
 
         twist = Twist()
         if d == 'f':
-            twist.linear.x = 0.1; twist.linear.y = 0.0; twist.linear.z = 0.0
+            twist.linear.x = 0.07; twist.linear.y = 0.0; twist.linear.z = 0.0
+            self.pub.publish(twist)
+            rospy.sleep(t)
         elif d == 'b':
-            twist.linear.x = -0.1; twist.linear.y = 0.0; twist.linear.z = 0.0
+            twist.linear.x = -0.07; twist.linear.y = 0.0; twist.linear.z = 0.0
         else:
             twist.linear.x = 0; twist.linear.y = 0; twist.linear.x = 0
         
@@ -135,9 +126,9 @@ class task2:
     def fix_target(self, m, e):
         twist = Twist()
         if m > IMAGE_SIZE_X / 2 + e:
-            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = -0.4
+            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = -0.15 #try 0.4
         elif m < IMAGE_SIZE_X / 2 - e:
-            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.4
+            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.15 # try 0.4
         else:
             twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
 
@@ -145,11 +136,11 @@ class task2:
 
 
     def callback_fn(self, s):
-        if self.num_bottles >= 2:
-            return 
+#         if self.num_bottles >= 2:
+#             return 
 
         m = s.data.split()
-        if m[0] == 'bottle' or m[0] == 'vase' or m[0] == 'book':
+        if m[0] == 'bottle' or m[0] == 'vase' or m[0] == 'person':
             # msg converter sends only this msgs but anyway check it 
             # find middle of bottle's bounding box
             mid = (int(m[2]) + int(m[1]))/2
@@ -165,10 +156,9 @@ class task2:
                 # self.move('f')
             twist = Twist ()
 
-            if self.num_detected ==1:
-                self.pub.publish(twist)
-
-            self.time = rospy.get_time()
+            if self.moving == True:
+                self.time = rospy.get_time()
+                self.moving = False
             if dif < CRITICAL_BOX_SIZE: 
                 if dif < 100:
                     twist.linear.x  = 0.15
@@ -181,17 +171,22 @@ class task2:
 
                 self.pub.publish(twist)
             else:
-                self.stop+=1
-                if self.stop ==2:
+#                 self.stop+=1
+#                 if self.stop ==2:
                     
-                # x = rospy.get_time() - self.time
+                x = rospy.get_time() - self.time
                 self.stop_robot()
                 self.pick()
-                self.move('b')
+                self.rotate(180)
+                self.move('f', x)
                 rospy.loginfo(x)
-                rospy.sleep(x)
                 self.stop_robot()
                 self.drop()
+                self.num_bottles+=1
+                self.moving = True
+                if self.num_bottles >=2:
+                    self.stop_robot()
+                    return
                 self.rotate(180)
                 self.stop_robot()
 
