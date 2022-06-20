@@ -205,33 +205,9 @@ class task3:
                 self.pick()
                 self.stop_robot()
                 self.move('b', 5.0)
-                self.moving = False
-                if self.moving == False:
-                	return
-                # self.stop_robot()
-                # self.rotate(180)
-                # self.move('f', x)
-                # rospy.loginfo(x)
-                # # rospy.sleep(x)
-                # self.stop_robot()
-                # self.drop()
-                # self.num_bottles += 1
-                # self.moving = True
-                # if self.num_bottles >= 2:
-                #     self.stop_robot()
-                #     return 
-                # self.stop_robot()
-                # self.rotate(90)
-                # self.rotate(270) # 180
-                # self.move('f', x)
-                # self.rotate(180)
-                # self.num_bottles += 1
-                # self.stop_robot()
+                #sleep for long time 
+                self.drop()
 
-                # movement to locate next bottle
-                # twist = Twist()
-                # twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2
-                # self.pub.publish(twist)
 
 def main():
     # let's see if the order changed, what will happen to error messages 
