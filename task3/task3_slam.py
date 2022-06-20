@@ -37,7 +37,7 @@ class task3:
         rospy.sleep(3.5)
         self.stop_robot()
 
-        # self.rotate(45)
+        self.rotate(45)
         # rospy.sleep(3.5)
         self.move('f', 15.5)
         # self.stop_robot()
