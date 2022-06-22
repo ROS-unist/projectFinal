@@ -171,9 +171,6 @@ class task2:
 
                 self.pub.publish(twist)
             else:
-#                 self.stop+=1
-#                 if self.stop ==2:
-                    
                 x = rospy.get_time() - self.time
                 self.stop_robot()
                 self.pick()
@@ -183,11 +180,13 @@ class task2:
                 self.stop_robot()
                 self.drop()
                 self.num_bottles+=1
+                if self.num_bottles == 1:
+                    self.rotate(target_degree) # change target degree based on where is the 2nd bottle,
+                    #create new degree in rotate function
                 self.moving = True
                 if self.num_bottles >=2:
                     self.stop_robot()
                     return
-                self.rotate(180)
                 self.stop_robot()
 
                 # movement to locate next bottle
