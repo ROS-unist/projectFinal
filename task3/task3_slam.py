@@ -29,12 +29,12 @@ class task3:
         self.arm = moveit_commander.MoveGroupCommander('arm')
         self.arm.set_planning_time(2) # do we need this only for arm?
         self.gripper.set_planning_time(2)
-        self.stop_robot()
-        twist = Twist()
-        twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
-        twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.25
-        self.pub.publish(twist)
-        rospy.sleep(3.5)
+#         self.stop_robot()
+#         twist = Twist()
+#         twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
+#         twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.25
+#         self.pub.publish(twist)
+#         rospy.sleep(3.5)
         self.stop_robot()
 
         self.rotate(45)
