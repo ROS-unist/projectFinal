@@ -95,7 +95,7 @@ class task3:
             # rospy.sleep(8)
             self.stop_robot()
             # twist.angular.z = 0
-        # self.pub.publish(twist)
+        self.pub.publish(twist)
 
     def stop_robot(self):
         # self.moving = False
