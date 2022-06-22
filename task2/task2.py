@@ -58,7 +58,7 @@ class task2:
     def rotate(self, angle):
         twist = Twist()
         twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
-        twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
+        twist.angular.x = 0.0; twist.angular.y = 0.0
         if angle == 90:
             twist.angular.z = -0.25
             self.pub.publish(twist)
@@ -141,9 +141,6 @@ class task2:
 
 
     def callback_fn(self, s):
-#         if self.num_bottles >= 2:
-#             return 
-
         m = s.data.split()
         if m[0] == 'bottle' or m[0] == 'vase' or m[0] == 'person':
             # msg converter sends only this msgs but anyway check it 
@@ -185,19 +182,14 @@ class task2:
                 self.stop_robot()
                 self.drop()
                 self.num_bottles+=1
+                self.moving = True
                 if self.num_bottles == 1:
                     self.rotate(135) # change target degree based on where is the 2nd bottle,
                     #create new degree in rotate function
-                self.moving = True
+                
                 if self.num_bottles >=2:
                     self.stop_robot()
                     return
-                self.stop_robot()
-
-                # movement to locate next bottle
-                # twist = Twist()
-                # twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.2
-                # self.pub.publish(twist)
 
 def main():
     # let's see if the order changed, what will happen to error messages 
