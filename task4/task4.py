@@ -13,7 +13,7 @@ IMAGE_SIZE_X = 1280
 CRITICAL_BOX_SIZE = 355 #1280 / 10
 
 
-class task2:
+class task4:
     def __init__(self):
         self.num_bottles = 0
         self.moving = True
