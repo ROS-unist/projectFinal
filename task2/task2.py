@@ -181,7 +181,6 @@ class task2:
                 rospy.loginfo(x)
                 self.stop_robot()
                 self.drop()
-                self.num_bottles+=1
                 self.moving = True
                 if self.num_bottles == 1:
                     self.rotate(135) # change target degree based on where is the 2nd bottle,
