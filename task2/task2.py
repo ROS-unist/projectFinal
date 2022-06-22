@@ -70,6 +70,11 @@ class task2:
             self.pub.publish(twist)
             rospy.sleep(7)
             twist.angular.z = 0
+        elif angle == 135:
+            twist.angular.z = - 0.5
+            self.pub.publish(twist)
+            rospy.sleep(5.2)
+            twist.angular.z = 0
         self.pub.publish(twist)
 
     def stop_robot(self):
@@ -181,7 +186,7 @@ class task2:
                 self.drop()
                 self.num_bottles+=1
                 if self.num_bottles == 1:
-                    self.rotate(target_degree) # change target degree based on where is the 2nd bottle,
+                    self.rotate(135) # change target degree based on where is the 2nd bottle,
                     #create new degree in rotate function
                 self.moving = True
                 if self.num_bottles >=2:
